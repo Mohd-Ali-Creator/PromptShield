@@ -124,34 +124,36 @@ The platform operates across three interconnected tiers:
 
 ```mermaid
 flowchart TB
-    subgraph ClientLayer["Client & Endpoint Layer"]
-        A[User in Browser] -->|Types prompt| B[ChatGPT Web Composer]
-        B -->|Intercepted by| C[PromptShield Extension MV3]
-        C -->|Local Regex Engine| D{Local Secret Found?}
-        D -->|Yes| E[Halt Event & Show In-Page Modal]
-        D -->|No| F[Allow Normal Submission]
+    subgraph ClientLayer["Client and Endpoint Layer"]
+        A["User in Browser"] -->|Types prompt| B["ChatGPT Web Composer"]
+        B -->|Intercepted by| C["PromptShield Extension MV3"]
+        C -->|Local Regex Engine| D{"Local Secret Found?"}
+        D -->|Yes| E["Halt Event and Show In-Page Modal"]
+        D -->|No| F["Allow Normal Submission"]
         
-        G[Security Operator] -->|Accesses Console| H[React 19 Frontend SPA :5173]
+        G["Security Operator"] -->|Accesses Console| H["React 19 Frontend SPA (Port 5173)"]
     end
 
-    subgraph GatewayLayer["Enterprise Gateway Tier (:4000)"]
-        H -->|JWT Auth / REST Requests| I[Express Gateway Server]
-        I -->|Socket.io Rooms| J[Real-time SOC Alert Stream]
-        I -->|Persist Audit Record| K[(MongoDB Atlas / Local DB)]
+    subgraph GatewayLayer["Enterprise Gateway Tier (Port 4000)"]
+        H -->|JWT Auth and REST Requests| I["Express Gateway Server"]
+        I -->|Socket.io Rooms| J["Real-time SOC Alert Stream"]
+        I -->|Persist Audit Record| K[("MongoDB Atlas Database")]
     end
 
-    subgraph SidecarLayer["AI Guardrail Sidecar (:5000)"]
-        I -->|POST /analyze Payload| L[FastAPI Python Engine]
-        L --> M[PII Sanitizer: Emails, SSN, Phone, Keys]
-        L --> N[Heuristic Rule Matrix: Injection & Extraction]
-        L --> O[ML Intent Classifier: TF-IDF + Logistic Regression]
-        M & N & O --> P[Cumulative Risk & Evidence Evaluator]
+    subgraph SidecarLayer["AI Guardrail Sidecar (Port 5000)"]
+        I -->|POST /analyze Payload| L["FastAPI Python Engine"]
+        L --> M["PII Sanitizer: Emails, SSN, Phone, Keys"]
+        L --> N["Heuristic Rule Matrix: Injection and Extraction"]
+        L --> O["ML Intent Classifier: TF-IDF and Logistic Regression"]
+        M --> P["Cumulative Risk and Evidence Evaluator"]
+        N --> P
+        O --> P
         P -->|Return Structured Telemetry| I
     end
 
     subgraph LLMLayer["AI Model Tier"]
-        I -->|If Safe or Sanitized| Q[Protected LLM / AI Workflow]
-        I -->|If Unprotected Benchmark| R[Unprotected LLM (Simulated Leaks)]
+        I -->|If Safe or Sanitized| Q["Protected LLM Production AI"]
+        I -->|If Unprotected Benchmark| R["Unprotected LLM (Simulated Leaks)"]
     end
 
     classDef danger fill:#fee2e2,stroke:#ef4444,stroke-width:2px;
@@ -169,43 +171,43 @@ flowchart TB
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Employee / User
-    participant Browser as Web Browser / Composer
+    actor User as Employee or User
+    participant Browser as Web Browser Composer
     participant Extension as PromptShield Content Script
-    participant Gateway as Aegis Node.js Gateway (:4000)
-    participant Sidecar as Python ML Sidecar (:5000)
+    participant Gateway as Node.js Gateway (Port 4000)
+    participant Sidecar as Python ML Sidecar (Port 5000)
     participant DB as MongoDB Atlas
     participant LLM as Protected AI Model
 
     User->>Browser: Enters prompt containing sensitive secret
-    Browser->>Extension: Fires submission gestures (Enter / Send Click)
+    Browser->>Extension: Fires submission gestures (Enter or Send Click)
     activate Extension
     Extension->>Extension: Deduplication Window (350ms buffer)
     Extension->>Extension: Ephemeral Regex Scan (Zero Network Latency)
     alt High-Risk Secret Detected Locally
-        Extension-->>Browser: preventDefault() & stopImmediatePropagation()
+        Extension-->>Browser: preventDefault() and stopImmediatePropagation()
         Extension-->>User: Displays High-Contrast Alert Modal
-    else Submission Allowed / Sent to API
+    else Submission Allowed or Sent to API
         Extension-->>Browser: Event proceeds normally
-        Browser->>Gateway: POST /api/chat { prompt, isProtected: true }
+        Browser->>Gateway: POST /api/chat (prompt, isProtected: true)
         activate Gateway
-        Gateway->>Sidecar: POST /analyze { prompt }
+        Gateway->>Sidecar: POST /analyze (prompt)
         activate Sidecar
         Sidecar->>Sidecar: 1. Scrub PII (Emails, Phones, SSN)
         Sidecar->>Sidecar: 2. Check Injection Heuristics
         Sidecar->>Sidecar: 3. Predict ML Semantic Intent
-        Sidecar->>Sidecar: 4. Compute Risk & Confidence Score
-        Sidecar-->>Gateway: Return { risk_score, action, threat_reasons, redacted_prompt }
+        Sidecar->>Sidecar: 4. Compute Risk and Confidence Score
+        Sidecar-->>Gateway: Return (risk_score, action, threat_reasons, redacted_prompt)
         deactivate Sidecar
 
-        alt Action == BLOCKED
+        alt Action is BLOCKED
             Gateway->>DB: Log Threat Incident (Audit Record)
             Gateway-->>User: HTTP 403 Forbidden [BLOCKED: Prompt Injection]
-        else Action == SANITIZED / ALLOWED
-            Gateway->>LLM: Forward Clean / Sanitized Payload
+        else Action is SANITIZED or ALLOWED
+            Gateway->>LLM: Forward Clean or Sanitized Payload
             LLM-->>Gateway: Response Generated
-            Gateway->>DB: Log Transaction & Forensics
-            Gateway-->>User: HTTP 200 OK with Clean Response & Telemetry
+            Gateway->>DB: Log Transaction and Forensics
+            Gateway-->>User: HTTP 200 OK with Clean Response and Telemetry
         end
         deactivate Gateway
     end
@@ -218,22 +220,24 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    Start([Raw Input Prompt]) --> Step1[1. Input Normalization]
-    Step1 --> Step2[2. PII Pattern Redactor]
-    Step2 --> Step3[3. Regex Heuristics Engine]
-    Step3 --> Step4[4. Scikit-Learn TF-IDF Classifier]
+    Start(["Raw Input Prompt"]) --> Step1["1. Input Normalization"]
+    Step1 --> Step2["2. PII Pattern Redactor"]
+    Step2 --> Step3["3. Regex Heuristics Engine"]
+    Step3 --> Step4["4. Scikit-Learn TF-IDF Classifier"]
 
-    Step2 -->|Email / Phone / Key| Ind1[+0.2 - 0.4 Risk: PII Flag]
-    Step3 -->|Override / Exfiltration| Ind2[+0.4 - 0.9 Risk: Heuristic Match]
-    Step4 -->|ML Probability > 0.60| Ind3[+ML Score: Semantic Threat]
+    Step2 -->|Email, Phone, Key| Ind1["+0.2 to 0.4 Risk: PII Flag"]
+    Step3 -->|Override, Exfiltration| Ind2["+0.4 to 0.9 Risk: Heuristic Match"]
+    Step4 -->|ML Probability > 0.60| Ind3["+ML Score: Semantic Threat"]
 
-    Ind1 & Ind2 & Ind3 --> RiskCalc{Indicators > 0?}
+    Ind1 --> RiskCalc{"Indicators Found?"}
+    Ind2 --> RiskCalc
+    Ind3 --> RiskCalc
     
-    RiskCalc -->|No: len==0| SafeAction[Risk = 0.0%<br>Action: ALLOWED<br>Confidence: 95%]
-    RiskCalc -->|Yes: Score < 0.4| LowAction[Risk < 40%<br>Action: ALLOWED (Sanitized)<br>Confidence: 85%]
-    RiskCalc -->|Yes: Score < 0.7| MedAction[Risk < 70%<br>Action: WARNED<br>Confidence: 85%]
-    RiskCalc -->|Yes: Score < 0.9| HighAction[Risk < 90%<br>Action: SANITIZED<br>Confidence: 90%]
-    RiskCalc -->|Yes: Score >= 0.9| CritAction[Risk >= 90%<br>Action: BLOCKED<br>Confidence: 95%]
+    RiskCalc -->|No: Count == 0| SafeAction["Risk = 0.0%<br/>Action: ALLOWED<br/>Confidence: 95%"]
+    RiskCalc -->|Yes: Score < 0.4| LowAction["Risk &lt; 40%<br/>Action: ALLOWED (Sanitized)<br/>Confidence: 85%"]
+    RiskCalc -->|Yes: Score < 0.7| MedAction["Risk &lt; 70%<br/>Action: WARNED<br/>Confidence: 85%"]
+    RiskCalc -->|Yes: Score < 0.9| HighAction["Risk &lt; 90%<br/>Action: SANITIZED<br/>Confidence: 90%"]
+    RiskCalc -->|Yes: Score >= 0.9| CritAction["Risk &gt;= 90%<br/>Action: BLOCKED<br/>Confidence: 95%"]
 
     classDef safeStyle fill:#d1fae5,stroke:#059669,stroke-width:2px;
     classDef warnStyle fill:#fef3c7,stroke:#d97706,stroke-width:2px;
