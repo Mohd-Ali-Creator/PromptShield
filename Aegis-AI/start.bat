@@ -6,7 +6,7 @@ echo ===================================================
 cd /d "%~dp0"
 
 echo [1/3] Starting Python ML Sidecar...
-start "Aegis Sidecar" cmd /k "cd /d "%~dp0sidecar" && .\venv\Scripts\activate.bat && python main.py"
+start "Aegis Sidecar" cmd /k "cd /d "%~dp0sidecar" && (if exist "venv\Scripts\activate.bat" call venv\Scripts\activate.bat) && python main.py"
 
 echo [2/3] Starting Node Gateway...
 start "Aegis Gateway" cmd /k "cd /d "%~dp0gateway" && node server.js"

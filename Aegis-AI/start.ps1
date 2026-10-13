@@ -7,7 +7,8 @@ $root = $PSScriptRoot
 
 # 1. Start Python Sidecar
 Write-Host "[1/3] Starting Python ML Sidecar..." -ForegroundColor Green
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$root\sidecar'; & '.\venv\Scripts\Activate.ps1'; python main.py"
+$sidecarCmd = "Set-Location '$root\sidecar'; if (Test-Path '.\venv\Scripts\Activate.ps1') { & '.\venv\Scripts\Activate.ps1' }; python main.py"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", $sidecarCmd
 
 # 2. Start Gateway
 Write-Host "[2/3] Starting Node Gateway..." -ForegroundColor Green

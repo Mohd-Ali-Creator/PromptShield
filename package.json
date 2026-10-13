@@ -5,6 +5,8 @@
   "main": "extension/content/detector.js",
   "scripts": {
     "test": "node --test tests/*.test.js",
+    "test:aegis": "node --test Aegis-AI/tests/*.test.js",
+    "test:all": "node --test tests/*.test.js Aegis-AI/tests/*.test.js",
     "serve": "node tests/serve-harness.js"
   },
   "keywords": [
