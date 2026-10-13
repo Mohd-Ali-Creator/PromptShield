@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+*/node_modules/
+venv/
+*/venv/
+__pycache__/
+*/__pycache__/
+
+# Build
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env.local

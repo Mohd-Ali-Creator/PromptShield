@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptShield AI — Verification Sandbox</title>
+  <!-- PromptShield in-page alert styles (content.css injected by content script) -->
+  <link rel="stylesheet" href="../content/content.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    /* =========================================================
+       AEGIS-AI NEO-BRUTALIST DESIGN TOKENS
+       ========================================================= */
+    :root {
+      --bg-page:        #f8fafc;
+      --bg-card:        #ffffff;
+      --bg-muted:       #f1f5f9;
+      --bg-dark:        #0f172a;
+
+      --border-dark:    #0f172a;
+      --border-w:       1.5px;
+      --border-mid:     #cbd5e1;
+
+      --text-main:      #0f172a;
+      --text-muted:     #64748b;
+      --text-sub:       #475569;
+
+      --purple:         #7c3aed;
+      --purple-dark:    #581c87;
+      --purple-light:   #f3e8ff;
+      --purple-border:  #c084fc;
+
+      --emerald:        #059669;
+      --emerald-dark:   #065f46;
+      --emerald-light:  #d1fae5;
+
+      --amber:          #d97706;
+      --amber-dark:     #92400e;
+      --amber-light:    #fef3c7;
+
+      --red:            #dc2626;
+      --red-dark:       #991b1b;
+      --red-light:      #fee2e2;
+
+      --blue:           #2563eb;
+      --blue-dark:      #1e40af;
+      --blue-light:     #dbeafe;
+
+      --shadow:         3px 3px 0px 0px #0f172a;
+      --shadow-sm:      2px 2px 0px 0px #0f172a;
+      --shadow-xs:      1.5px 1.5px 0px 0px #0f172a;
+      --shadow-hover:   4px 4px 0px 0px #0f172a;
+
+      --r-sm:  6px;
+      --r-md:  10px;
+      --r-lg:  14px;
+      --r-xl:  18px;
+      --r-full:9999px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-page);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 20px 16px 40px;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-muted); border-left: 1.5px solid var(--border-dark); }
+    ::-webkit-scrollbar-thumb { background: var(--border-dark); }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+    /* =========================================================
+       LAYOUT
+       ========================================================= */
+    .sandbox-wrapper {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* =========================================================
+       HEADER
+       ========================================================= */
+    .sandbox-header {
+      background: var(--bg-card);
+      border: var(--border-w) solid var(--border-dark);
+      border-radius: var(--r-xl);
+      padding: 16px 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      background: var(--purple);
+      border: var(--border-w) solid var(--border-dark);
+      border-radius: var(--r-md);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .brand-logo svg { width: 22px; height: 22px; }
+
+    .brand-info { display: flex; flex-direction: column; }
+
+    .brand-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+      line-height: 1.1;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .header-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: var(--r-full);
+      border: var(--border-w) solid var(--border-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-mv3 {
+      background: var(--emerald-light);
+      color: var(--emerald-dark);
+      box-shadow: var(--shadow-xs);
+    }
+
+    .badge-offline {
+      background: #f1f5f9;
+      color: var(--text-sub);
+      box-shadow: var(--shadow-xs);
+    }
+
+    .header-info {
+      font-size: 11px;
+      color: var(--text-muted);
+      max-width: 380px;
+      line-height: 1.4;
+    }
+
+    /* =========================================================
+       SECTION CARDS
+       ========================================================= */
+    .neo-card {
+      background: var(--bg-card);
+      border: var(--border-w) solid var(--border-dark);
+      border-radius: var(--r-xl);
+      padding: 18px 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .section-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: var(--text-main);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .section-header-left { display: flex; flex-direction: column; }
+
+    .section-note {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-top: 2px;
+      flex-shrink: 0;
+      align-self: flex-end;
+    }
+
+    /* =========================================================
+       COMPOSER SIMULATOR
+       ========================================================= */
+    .composer-area {
+      background: var(--bg-muted);
+      border: var(--border-w) solid var(--border-dark);
+      border-radius: var(--r-lg);
+      padding: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .chatgpt-form-box {
+      background: var(--bg-card);
+      border: var(--border-w) solid var(--border-dark);
+      border-radius: var(--r-lg);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.15s ease;
+    }
+
+    .chatgpt-form-box:focus-within {
+      box-shadow: var(--shadow-hover);
+      border-color: var(--purple);
+    }
+
+    #prompt-textarea {
+      min-height: 70px;
+      max-height: 180px;
+      overflow-y: auto;
+      outline: none;
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    #prompt-textarea:empty::before {
+      content: attr(data-placeholder);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .composer-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: var(--border-w) solid var(--border-mid);
+      padding-top: 9px;
+    }
+
+    .left-controls, .right-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Attach / Voice — clearly disabled, non-intercepted controls */
+    .chat-btn {
+      background: transparent;
+      border: 1.5px solid transparent;
+      border-radius: var(--r-sm);
+      padding: 5px 10px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      transition: all 0.12s ease;
+      user-select: none;
+    }
+
+    .chat-btn:hover:not(.btn-send) {
+      background: var(--bg-muted);
+      border-color: var(--border-dark);
+      color: var(--text-main);
+    }
+
+    /* Disabled non-submission controls */
+    .chat-btn.ctrl-disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      position: relative;
+    }
+
+    .chat-btn.ctrl-disabled::after {
+      content: 'Simulated';
+      position: absolute;
+      bottom: calc(100% + 5px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text-main);
+      color: #fff;
+      font-size: 9px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2px 6px;
+      border-radius: 3px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+    }
+
+    .chat-btn.ctrl-disabled:hover::after { opacity: 1; }
+
+    /* Send button — prominent Neo-Brutalist style */
+    .btn-send {
+      background: var(--bg-dark);
+      color: #ffffff;
+      border: var(--border-w) solid var(--border-dark);
+      border-radius: var(--r-md);
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-xs);
+      transition: all 0.12s ease;
+    }
+
+    .btn-send:hover {
+      background: var(--purple);
+      transform: translate(-1px, -1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-send:active {
+      transform: translate(1px, 1px);
+      box-shadow: none;
+    }
+
+    .btn-send svg { width: 16px; height: 16px; fill: #fff; }
+
+    /* Composer hint strip */
+    .composer-hint {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      font-size: 10.5px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .composer-hint span {
+      background: var(--bg-muted);
+      border: 1px solid var(--border-mid);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 9.5px;
+      font-weight: 700;
+    }
+
+    /* =========================================================
+       TEST VECTORS GRID
+       ========================================================= */
+    .test-vectors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 10px;
+    }
+
+    .vector-btn {
+      background: var(--bg-card);
+      border: var(--border-w) solid var(--border-dark);
+      border-radius: var(--r-md);
+      padding: 11px 13px;
+      color: var(--text-main);
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      box-shadow: var(--shadow-xs);
+      transition: all 0.12s ease;
+      user-select: none;
+      font-family: inherit;
+    }
+
+    .vector-btn:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: var(--shadow-sm);
+      border-color: var(--purple);
+    }
+
+    .vector-btn:active {
+      transform: translate(1px, 1px);
+      box-shadow: none;
+    }
+
+    .vector-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 3px;
+      width: fit-content;
+      letter-spacing: 0.04em;
+    }
+
+    .tag-critical  { background: var(--red-light);    color: var(--red-dark);    }
+    .tag-high      { background: var(--amber-light);   color: var(--amber-dark);  }
+    .tag-safe      { background: var(--emerald-light); color: var(--emerald-dark);}
+    .tag-fp        { background: var(--blue-light);    color: var(--blue-dark);   }
+    .tag-sim       { background: var(--purple-light);  color: var(--purple-dark); }
+    .tag-dna-block { background: var(--red-light);     color: var(--red-dark);    }
+    .tag-dna-warn  { background: var(--amber-light);   color: var(--amber-dark);  }
+    .tag-dna-off   { background: var(--emerald-light); color: var(--emerald-dark);}
+
+    .vector-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 12.5px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+
+    .vector-desc {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+      line-height: 1.3;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .vector-action-hint {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .vector-action-hint::before {
+      content: '↗';
+      font-size: 10px;
+    }
+
+    /* Vectors group label */
+    .vectors-group-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 18px;
+      margin-bottom: 10px;
+    }
+
+    .group-label-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .group-label-note {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .group-divider {
+      flex: 1;
+      height: var(--border-w);
+      background: var(--border-dark);
+    }
+
+    /* =========================================================
+       EVENT CONSOLE
+       ========================================================= */
+    .console-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .console-box {
+      background: #0f172a;
+      border: var(--border-w) solid var(--border-dark);
+      border-radius: var(--r-md);
+      padding: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .log-entry {
+      padding: 4px 7px;
+      border-radius: 4px;
+      display: flex;
+      gap: 8px;
+      word-break: break-all;
+      line-height: 1.4;
+    }
+
+    .log-entry.success { background: rgba(5, 150, 105, 0.15); color: #34d399; }
+    .log-entry.control { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; }
+    .log-entry.paste   { background: rgba(217, 119, 6, 0.15); color: #fbbf24; }
+
+    /* =========================================================
+       BUTTONS
+       ========================================================= */
+    .neo-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 11px;
+      border: var(--border-w) solid var(--border-dark);
+      border-radius: var(--r-sm);
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: var(--shadow-xs);
+      transition: all 0.12s ease;
+      background: var(--bg-card);
+      color: var(--text-main);
+    }
+
+    .neo-btn:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .neo-btn:active {
+      transform: translate(1px, 1px);
+      box-shadow: none;
+    }
+
+    /* DNA section specifics */
+    .dna-info-strip {
+      background: var(--purple-light);
+      border: var(--border-w) solid var(--purple-border);
+      border-radius: var(--r-md);
+      padding: 8px 12px;
+      font-size: 11px;
+      color: var(--purple-dark);
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 10px;
+    }
+
+    .dna-info-strip code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      background: rgba(124, 58, 237, 0.12);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    /* =========================================================
+       RESPONSIVE
+       ========================================================= */
+    @media (max-width: 600px) {
+      body { padding: 12px 10px 32px; }
+      .sandbox-header { flex-direction: column; align-items: flex-start; }
+      .header-badges { margin-top: 6px; }
+      .header-info { max-width: 100%; }
+      .test-vectors-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 400px) {
+      .test-vectors-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sandbox-wrapper">
+
+    <!-- ══════════════ HEADER ══════════════ -->
+    <header class="sandbox-header">
+      <div class="header-brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <span class="brand-name">PromptShield AI</span>
+          <span class="brand-sub">Verification Sandbox — Offline Regression Testing</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+        <div class="header-badges">
+          <span class="badge badge-mv3">Manifest V3</span>
+          <span class="badge badge-offline">Offline · Local Only</span>
+        </div>
+        <p class="header-info">Deterministic replica of ChatGPT's DOM structure. Tests run entirely client-side — no prompts or secrets reach any network.</p>
+      </div>
+    </header>
+
+    <!-- ══════════════ COMPOSER SIMULATOR ══════════════ -->
+    <section class="neo-card">
+      <div class="section-header">
+        <div class="section-header-left">
+          <span class="section-eyebrow">Composer Simulator</span>
+          <span class="section-title">ChatGPT Prompt Composer</span>
+        </div>
+        <span class="section-note">Tests: Enter · Shift+Enter · Click · Attachments</span>
+      </div>
+
+      <div class="composer-area">
+        <div id="composer-host">
+          <!-- Form replicating ChatGPT composer DOM structure -->
+          <form id="chatgpt-sim-form" onsubmit="return false;">
+            <div class="chatgpt-form-box">
+              <div
+                id="prompt-textarea"
+                contenteditable="true"
+                role="textbox"
+                aria-multiline="true"
+                aria-label="Message PromptShield Simulator"
+                tabindex="0"
+                data-placeholder="Click any test vector below, or type here and press Enter / click Send ↗"
+              ></div>
+
+              <div class="composer-toolbar">
+                <div class="left-controls">
+                  <!-- Attach — PromptShield MUST NOT intercept -->
+                  <button
+                    type="button"
+                    class="chat-btn ctrl-disabled"
+                    id="sim-attach-btn"
+                    data-testid="attach-button"
+                    aria-label="Attach files"
+                    title="Attachment control — Not intercepted by PromptShield (Simulated)"
+                    disabled
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+                    </svg>
+                    Attach
+                  </button>
+
+                  <!-- Voice — PromptShield MUST NOT intercept -->
+                  <button
+                    type="button"
+                    class="chat-btn ctrl-disabled"
+                    id="sim-voice-btn"
+                    data-testid="voice-mode-button"
+                    aria-label="Voice mode"
+                    title="Voice control — Not intercepted by PromptShield (Simulated)"
+                    disabled
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+                      <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
+                    </svg>
+                    Voice
+                  </button>
+                </div>
+
+                <div class="right-controls">
+                  <!-- Send — PromptShield MUST intercept for sensitive prompts -->
+                  <button
+                    type="submit"
+                    class="chat-btn btn-send"
+                    id="sim-send-btn"
+                    data-testid="send-button"
+                    aria-label="Send prompt"
+                    title="Send Prompt — PromptShield intercepts this for sensitive content"
+                  >
+                    <svg viewBox="0 0 24 24">
+                      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="composer-hint">
+          <span>Enter</span> submit &nbsp;·&nbsp;
+          <span>Shift+Enter</span> new line (not intercepted) &nbsp;·&nbsp;
+          <span>Click ↗</span> click-path test
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ TEST VECTORS ══════════════ -->
+    <section class="neo-card">
+      <div class="section-header">
+        <div class="section-header-left">
+          <span class="section-eyebrow">Test Vectors &amp; Edge Cases</span>
+          <span class="section-title">Click a card to load it into the composer</span>
+        </div>
+      </div>
+
+      <!-- Group: Safe -->
+      <div class="vectors-group-label">
+        <span class="group-label-text">✓ Safe / False Positive</span>
+        <div class="group-divider"></div>
+        <span class="group-label-note">Should PASS through</span>
+      </div>
+      <div class="test-vectors-grid">
+        <button type="button" class="vector-btn" id="vec-safe">
+          <span class="vector-tag tag-safe">Safe Vector</span>
+          <span class="vector-title">Benign Programming Prompt</span>
+          <span class="vector-desc">Explain the difference between TCP and UDP in computer networks.</span>
+          <span class="vector-action-hint">Load into composer</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-fp-env">
+          <span class="vector-tag tag-fp">False Positive</span>
+          <span class="vector-title">Environment Variable Lookup</span>
+          <span class="vector-desc">const apiKey = process.env.OPENAI_API_KEY — should NOT block.</span>
+          <span class="vector-action-hint">Load into composer</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-fp-placeholder">
+          <span class="vector-tag tag-fp">False Positive</span>
+          <span class="vector-title">Documentation Placeholder</span>
+          <span class="vector-desc">api_key = "&lt;your-api-key-here&gt;" — placeholder only, not a real secret.</span>
+          <span class="vector-action-hint">Load into composer</span>
+        </button>
+      </div>
+
+      <!-- Group: Critical -->
+      <div class="vectors-group-label">
+        <span class="group-label-text">⛔ Critical Threats</span>
+        <div class="group-divider"></div>
+        <span class="group-label-note">Should BLOCK</span>
+      </div>
+      <div class="test-vectors-grid">
+        <button type="button" class="vector-btn" id="vec-openai">
+          <span class="vector-tag tag-critical">Critical</span>
+          <span class="vector-title">Synthetic OpenAI Key</span>
+          <span class="vector-desc">Matches sk-proj-… format. All values are synthetic — no real credentials.</span>
+          <span class="vector-action-hint">Load into composer</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-aws">
+          <span class="vector-tag tag-critical">Critical</span>
+          <span class="vector-title">Synthetic AWS Access Key</span>
+          <span class="vector-desc">AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE — example from AWS documentation.</span>
+          <span class="vector-action-hint">Load into composer</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-privkey">
+          <span class="vector-tag tag-critical">Critical</span>
+          <span class="vector-title">Synthetic Private Key Block</span>
+          <span class="vector-desc">RSA PRIVATE KEY header detected. Content is synthetic test data.</span>
+          <span class="vector-action-hint">Load into composer</span>
+        </button>
+      </div>
+
+      <!-- Group: High Risk -->
+      <div class="vectors-group-label">
+        <span class="group-label-text">⚠ High Risk</span>
+        <div class="group-divider"></div>
+        <span class="group-label-note">Should BLOCK in Strict mode</span>
+      </div>
+      <div class="test-vectors-grid">
+        <button type="button" class="vector-btn" id="vec-db">
+          <span class="vector-tag tag-high">High Risk</span>
+          <span class="vector-title">Database URI with Password</span>
+          <span class="vector-desc">postgres://user:password@host — synthetic connection string pattern.</span>
+          <span class="vector-action-hint">Load into composer</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-pass">
+          <span class="vector-tag tag-high">High Risk</span>
+          <span class="vector-title">Plaintext Password Assignment</span>
+          <span class="vector-desc">db_password = "…" — variable-based password assignment pattern.</span>
+          <span class="vector-action-hint">Load into composer</span>
+        </button>
+      </div>
+
+      <!-- Group: Dynamic DOM -->
+      <div class="vectors-group-label">
+        <span class="group-label-text">⟳ Dynamic DOM</span>
+        <div class="group-divider"></div>
+        <span class="group-label-note">Observer resilience tests</span>
+      </div>
+      <div class="test-vectors-grid">
+        <button type="button" class="vector-btn" id="btn-remount-dom">
+          <span class="vector-tag tag-sim">DOM Simulation</span>
+          <span class="vector-title">Simulate SPA Navigation</span>
+          <span class="vector-desc">Unmounts &amp; remounts composer after 350ms — tests MutationObserver re-bind.</span>
+          <span class="vector-action-hint">Run simulation</span>
+        </button>
+      </div>
+
+      <!-- ══ Company Data DNA ══ -->
+      <div class="vectors-group-label" style="margin-top: 28px;">
+        <span class="group-label-text">🧬 Company Data DNA</span>
+        <div class="group-divider"></div>
+        <span class="group-label-note">chrome.storage rules (extension context only)</span>
+      </div>
+
+      <div class="dna-info-strip">
+        Sandbox auto-seeds four synthetic Company DNA rules into <code>chrome.storage</code> on load.
+        These rules only activate when running under a <code>chrome-extension://</code> origin.
+        All patterns are safe test tokens — no real project names or codes.
+      </div>
+
+      <div class="test-vectors-grid">
+        <button type="button" class="vector-btn" id="vec-dna-falcon">
+          <span class="vector-tag tag-dna-block">DNA · Block</span>
+          <span class="vector-title">Project Falcon Codename</span>
+          <span class="vector-desc">Exact marker match with action=block. Rule CDR-001.</span>
+          <span class="vector-action-hint">Load into composer</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-dna-client">
+          <span class="vector-tag tag-dna-block">DNA · Block</span>
+          <span class="vector-title">Client Demo Reference Code</span>
+          <span class="vector-desc">Exact marker match with action=block. Rule CDR-002.</span>
+          <span class="vector-action-hint">Load into composer</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-dna-release">
+          <span class="vector-tag tag-dna-warn">DNA · Warn</span>
+          <span class="vector-title">Confidential Release Marker</span>
+          <span class="vector-desc">Exact marker match with action=warn. Rule CDR-003.</span>
+          <span class="vector-action-hint">Load into composer</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-dna-disabled">
+          <span class="vector-tag tag-dna-off">DNA · Disabled</span>
+          <span class="vector-title">Disabled Rule — Must NOT trigger</span>
+          <span class="vector-desc">Rule CDR-004 has enabled=false. Prompt must pass through freely.</span>
+          <span class="vector-action-hint">Load into composer</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ══════════════ EVENT CONSOLE ══════════════ -->
+    <section class="neo-card">
+      <div class="console-header">
+        <div>
+          <span class="section-eyebrow">Submission Event Console</span>
+          <span class="section-title">Live Interception Log</span>
+        </div>
+        <button type="button" class="neo-btn" id="clear-console-btn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+          </svg>
+          Clear Console
+        </button>
+      </div>
+      <div class="console-box" id="event-console">
+        <div class="log-entry" style="color: #475569;">Ready. Click any test vector card above, then press Enter or ↗ Send to test PromptShield interception…</div>
+      </div>
+    </section>
+
+  </div><!-- /.sandbox-wrapper -->
+
+  <!-- PromptShield Core Modules (CSP-compliant external scripts) -->
+  <script src="../content/detector.js"></script>
+  <script src="../content/company-rules.js"></script>
+  <script src="../content/ui.js"></script>
+  <script src="../content/content.js"></script>
+  <!-- External Test Harness Controller (No inline scripts — MV3 CSP compliant) -->
+  <script src="test-harness.js"></script>
+</body>
+</html>

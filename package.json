@@ -1,0 +1,20 @@
+{
+  "name": "promptshield-ai",
+  "version": "1.0.0",
+  "description": "Local-first client-side security guardrail detecting sensitive data in prompts before submission to AI models.",
+  "main": "extension/content/detector.js",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "serve": "node tests/serve-harness.js"
+  },
+  "keywords": [
+    "cybersecurity",
+    "chatgpt",
+    "chrome-extension",
+    "dlp",
+    "data-loss-prevention",
+    "privacy"
+  ],
+  "author": "PromptShield AI Team",
+  "license": "Apache-2.0"
+}

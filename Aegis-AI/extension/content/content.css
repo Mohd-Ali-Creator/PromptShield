@@ -1,0 +1,370 @@
+/* PromptShield AI - In-Page Alert Modal UI
+   Neo-Brutalist design system matching Aegis-AI website.
+   injected into host-page DOM via content.js / ui.js.
+   All styles are self-contained under #promptshield-overlay-container
+   to avoid polluting the host page. */
+
+/* =====================================================
+   AEGIS-AI DESIGN TOKENS (mirrored inside content.css
+   using a scoped custom-property trick on :root because
+   content styles inherit from the injected shadow-free
+   container, not from the host page's :root.)
+   ===================================================== */
+#promptshield-overlay-container {
+  /* Layout / display */
+  all: initial;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2147483647; /* Maximum z-index */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Backdrop */
+  background-color: rgba(10, 15, 29, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  /* Typography fallback (host page fonts are excluded) */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #0f172a;
+
+  /* Hidden by default — no pointer events until shown */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#promptshield-overlay-container.promptshield-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* =====================================================
+   MODAL CARD — Neo-Brutalist hard border + offset shadow
+   ===================================================== */
+.promptshield-modal-card {
+  width: 90%;
+  max-width: 520px;
+  background: #ffffff;
+  border: 2px solid #0f172a;
+  border-radius: 16px;
+  box-shadow: 5px 5px 0px 0px #0f172a;
+  color: #0f172a;
+  padding: 22px 22px 18px;
+  box-sizing: border-box;
+
+  transform: translateY(14px) scale(0.97);
+  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#promptshield-overlay-container.promptshield-visible .promptshield-modal-card {
+  transform: translateY(0) scale(1);
+}
+
+/* =====================================================
+   HEADER
+   ===================================================== */
+.promptshield-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #0f172a;
+}
+
+.promptshield-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Shield icon container */
+.promptshield-logo-icon {
+  width: 34px;
+  height: 34px;
+  background: #7c3aed;
+  border: 2px solid #0f172a;
+  border-radius: 8px;
+  box-shadow: 2px 2px 0px 0px #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.promptshield-logo-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: #ffffff;
+}
+
+.promptshield-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+/* =====================================================
+   SEVERITY BADGE
+   ===================================================== */
+.promptshield-badge-blocked {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 1.5px solid #0f172a;
+  box-shadow: 1.5px 1.5px 0px #0f172a;
+
+  /* default (BLOCKED) */
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Severity variants */
+.promptshield-badge-blocked.CRITICAL {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.promptshield-badge-blocked.HIGH {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.promptshield-badge-blocked.MEDIUM {
+  background: #fef3c7;
+  color: #78350f;
+}
+
+.promptshield-badge-blocked.WARN,
+.promptshield-badge-blocked.WARNING {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* =====================================================
+   BODY
+   ===================================================== */
+.promptshield-body {
+  margin-bottom: 16px;
+}
+
+.promptshield-message {
+  font-size: 13px;
+  color: #475569;
+  margin: 0 0 14px 0;
+  line-height: 1.5;
+}
+
+/* =====================================================
+   VIOLATIONS LIST
+   ===================================================== */
+.promptshield-violations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 230px;
+  overflow-y: auto;
+  margin-bottom: 14px;
+
+  /* Thin Neo-Brutalist scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #0f172a #f1f5f9;
+}
+
+.promptshield-violations-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.promptshield-violations-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-left: 1.5px solid #0f172a;
+}
+
+.promptshield-violations-list::-webkit-scrollbar-thumb {
+  background: #0f172a;
+}
+
+/* Individual violation card */
+.promptshield-violation-item {
+  background: #f8fafc;
+  border: 1.5px solid #0f172a;
+  border-radius: 8px;
+  padding: 10px 12px;
+  border-left: 4px solid #dc2626;
+  box-shadow: 2px 2px 0px #0f172a;
+}
+
+.promptshield-violation-item + .promptshield-violation-item {
+  /* small spacing already handled by gap */
+}
+
+.promptshield-violation-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.promptshield-rule-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Severity pill inside violation card */
+.promptshield-rule-severity {
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid #0f172a;
+  flex-shrink: 0;
+}
+
+.promptshield-rule-severity.CRITICAL {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.promptshield-rule-severity.HIGH {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.promptshield-rule-severity.MEDIUM {
+  background: #fef9c3;
+  color: #713f12;
+}
+
+.promptshield-rule-severity.LOW {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.promptshield-rule-desc {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+/* Redacted match box */
+.promptshield-redacted-box {
+  background: #0f172a;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+  font-size: 11.5px;
+  color: #fca5a5;
+  word-break: break-all;
+  border: 1px solid #1e293b;
+}
+
+.promptshield-redacted-box code {
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* =====================================================
+   SAFE PRACTICE GUIDANCE STRIP
+   ===================================================== */
+.promptshield-guidance {
+  background: #f3e8ff;
+  border: 1.5px solid #0f172a;
+  border-radius: 7px;
+  padding: 8px 11px;
+  font-size: 11.5px;
+  color: #4c1d95;
+  line-height: 1.45;
+  box-shadow: 2px 2px 0px #0f172a;
+}
+
+.promptshield-guidance strong {
+  font-weight: 700;
+}
+
+.promptshield-guidance code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+  font-size: 10.5px;
+  background: rgba(124, 58, 237, 0.12);
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: #5b21b6;
+}
+
+/* =====================================================
+   FOOTER / ACTIONS
+   ===================================================== */
+.promptshield-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 2px solid #0f172a;
+}
+
+/* Primary CTA — Revise Prompt */
+.promptshield-btn-primary {
+  background: #7c3aed;
+  color: #ffffff;
+  border: 2px solid #0f172a;
+  border-radius: 7px;
+  padding: 8px 18px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px #0f172a;
+  transition: all 0.1s ease;
+  font-family: inherit;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.promptshield-btn-primary:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #0f172a;
+  background: #6d28d9;
+}
+
+.promptshield-btn-primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.promptshield-btn-primary:focus-visible {
+  outline: 3px solid #7c3aed;
+  outline-offset: 2px;
+}
+
+/* =====================================================
+   COMPOSER WARNING HIGHLIGHT (applied to composer element)
+   ===================================================== */
+.promptshield-composer-warning {
+  border: 2px solid #dc2626 !important;
+  box-shadow: 2px 2px 0px 0px #0f172a, 0 0 0 3px rgba(220, 38, 38, 0.2) !important;
+}

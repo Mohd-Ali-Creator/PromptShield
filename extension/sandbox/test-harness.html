@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptShield AI - ChatGPT Simulation Test Harness</title>
+  <!-- PromptShield in-page alert styles -->
+  <link rel="stylesheet" href="../content/content.css">
+  <style>
+    :root {
+      --bg-primary: #212121;
+      --bg-secondary: #2f2f2f;
+      --border-color: #424242;
+      --text-primary: #ececec;
+      --text-muted: #b4b4b4;
+      --accent: #10a37f;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    header {
+      background: #171717;
+      padding: 18px 24px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-title h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .header-title p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .badge-mv3 {
+      background: rgba(16, 163, 127, 0.15);
+      border: 1px solid rgba(16, 163, 127, 0.4);
+      color: #34d399;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+    }
+
+    /* Simulation Area */
+    .simulator-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .section-heading {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* ChatGPT Composer Replica */
+    .chatgpt-form-box {
+      background: #212121;
+      border: 1px solid #4f4f4f;
+      border-radius: 18px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    #prompt-textarea {
+      min-height: 64px;
+      max-height: 200px;
+      overflow-y: auto;
+      outline: none;
+      color: #fff;
+      font-size: 15px;
+      line-height: 1.5;
+      word-break: break-word;
+      white-space: pre-wrap;
+      transition: outline 0.2s ease;
+    }
+
+    #prompt-textarea:empty:before {
+      content: attr(data-placeholder);
+      color: #8e8e8e;
+      pointer-events: none;
+    }
+
+    .composer-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid #333;
+      padding-top: 8px;
+    }
+
+    .left-controls, .right-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chat-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 6px 10px;
+      color: #b4b4b4;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      transition: all 0.15s ease;
+    }
+
+    .chat-btn:hover {
+      background: #333;
+      color: #fff;
+    }
+
+    .btn-send {
+      background: #ffffff;
+      color: #000000;
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .btn-send:hover {
+      background: #dcdcdc;
+    }
+
+    .btn-send svg {
+      width: 16px;
+      height: 16px;
+      fill: #000;
+    }
+
+    /* Test Vector Buttons Grid */
+    .test-vectors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .vector-btn {
+      background: #212121;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #ececec;
+      text-align: left;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .vector-btn:hover {
+      border-color: #3b82f6;
+      background: #282828;
+      transform: translateY(-1px);
+    }
+
+    .vector-btn:active {
+      transform: translateY(0);
+      background: #1c1c1c;
+    }
+
+    .vector-tag {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      width: fit-content;
+    }
+
+    .tag-critical { background: #7f1d1d; color: #fca5a5; }
+    .tag-high { background: #7c2d12; color: #fdba74; }
+    .tag-safe { background: #064e3b; color: #6ee7b7; }
+    .tag-sim { background: #1e3a8a; color: #93c5fd; }
+
+    /* Event Console */
+    .console-box {
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      padding: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .log-entry {
+      padding: 4px 6px;
+      border-radius: 4px;
+      display: flex;
+      gap: 8px;
+      word-break: break-all;
+    }
+
+    .log-entry.success { background: rgba(16, 185, 129, 0.12); color: #34d399; }
+    .log-entry.control { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+    .log-entry.paste { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="header-title">
+        <h1>PromptShield AI - Verification Sandbox</h1>
+        <p>Offline replica of ChatGPT DOM structure for deterministic regression testing</p>
+      </div>
+      <span class="badge-mv3">Manifest V3 Local Sandbox</span>
+    </header>
+
+    <!-- ChatGPT Simulated Composer -->
+    <section class="simulator-card">
+      <div class="section-heading">
+        <span>ChatGPT Prompt Composer Simulator</span>
+        <span style="font-size: 11px; color: #9ca3af;">(Tests: Enter, Shift+Enter, Click, Attachments)</span>
+      </div>
+
+      <div id="composer-host">
+        <!-- Form container replicating ChatGPT structure -->
+        <form id="chatgpt-sim-form" onsubmit="return false;">
+          <div class="chatgpt-form-box">
+            <div
+              id="prompt-textarea"
+              contenteditable="true"
+              role="textbox"
+              tabindex="0"
+              data-placeholder="Message ChatGPT... (Click any test vector card below or type here)"
+            ></div>
+
+            <div class="composer-toolbar">
+              <div class="left-controls">
+                <!-- Attachment Button: PROMPTSHIELD MUST NOT INTERCEPT THIS -->
+                <button
+                  type="button"
+                  class="chat-btn"
+                  id="sim-attach-btn"
+                  data-testid="attach-button"
+                  aria-label="Attach files"
+                  title="Attachment Control (Should not be intercepted by PromptShield)"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                  Attach File
+                </button>
+
+                <!-- Voice Mode Button: PROMPTSHIELD MUST NOT INTERCEPT THIS -->
+                <button
+                  type="button"
+                  class="chat-btn"
+                  id="sim-voice-btn"
+                  data-testid="voice-mode-button"
+                  aria-label="Voice mode"
+                  title="Voice Control (Should not be intercepted by PromptShield)"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+                    <path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/>
+                  </svg>
+                  Voice
+                </button>
+              </div>
+
+              <div class="right-controls">
+                <!-- Send Button: PROMPTSHIELD MUST INTERCEPT THIS FOR SENSITIVE PROMPTS -->
+                <button
+                  type="submit"
+                  class="chat-btn btn-send"
+                  id="sim-send-btn"
+                  data-testid="send-button"
+                  aria-label="Send prompt"
+                  title="Send Prompt Button"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Test Vectors & Dynamic DOM Controls -->
+    <section class="simulator-card">
+      <div class="section-heading">
+        <span>Test Vectors & Edge Cases (Click to load into composer)</span>
+      </div>
+
+      <div class="test-vectors-grid">
+        <button type="button" class="vector-btn" id="vec-safe">
+          <span class="vector-tag tag-safe">Safe Vector</span>
+          <strong>Benign Programming Prompt</strong>
+          <span>"Explain the difference between TCP and UDP..."</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-openai">
+          <span class="vector-tag tag-critical">Critical Vector</span>
+          <strong>Synthetic OpenAI Key</strong>
+          <span>sk-proj-TEST1234567890abcdef1234567890...</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-aws">
+          <span class="vector-tag tag-critical">Critical Vector</span>
+          <strong>Synthetic AWS Access Key</strong>
+          <span>AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-privkey">
+          <span class="vector-tag tag-critical">Critical Vector</span>
+          <strong>Synthetic Private Key Block</strong>
+          <span>-----BEGIN RSA PRIVATE KEY----- ...</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-db">
+          <span class="vector-tag tag-high">High Risk Vector</span>
+          <strong>Database URI with Password</strong>
+          <span>postgres://user:SuperPass123@db.com/db</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-pass">
+          <span class="vector-tag tag-high">High Risk Vector</span>
+          <strong>Plaintext Password Assignment</strong>
+          <span>db_password = "ProductionPassword99!"</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-fp-env">
+          <span class="vector-tag tag-safe">False Positive Test</span>
+          <strong>Environment Variable Lookup</strong>
+          <span>const key = process.env.OPENAI_API_KEY;</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-fp-placeholder">
+          <span class="vector-tag tag-safe">False Positive Test</span>
+          <strong>Documentation Placeholder</strong>
+          <span>api_key = "&lt;your-api-key-here&gt;"</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="btn-remount-dom">
+          <span class="vector-tag tag-sim">Dynamic DOM Test</span>
+          <strong>Simulate SPA Navigation</strong>
+          <span>Unmounts & remounts composer after 350ms</span>
+        </button>
+      </div>
+
+      <!-- Company Data DNA Test Vectors -->
+      <div class="section-heading" style="margin-top: 18px;">
+        <span>Company Data DNA Vectors</span>
+        <span style="font-size: 11px; color: #9ca3af;">(Sandbox self-configures rules via chrome.storage)</span>
+      </div>
+      <div class="test-vectors-grid">
+        <button type="button" class="vector-btn" id="vec-dna-falcon">
+          <span class="vector-tag tag-critical">DNA Block</span>
+          <strong>Project Falcon Code</strong>
+          <span>PROJECT-FALCON-7Q (exact marker, action=block)</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-dna-client">
+          <span class="vector-tag tag-critical">DNA Block</span>
+          <strong>Client Demo Code</strong>
+          <span>CLIENT-DEMO-4821 (exact marker, action=block)</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-dna-release">
+          <span class="vector-tag tag-high">DNA Warn</span>
+          <strong>Confidential Release Marker</strong>
+          <span>INTERNAL-RELEASE-CONFIDENTIAL (action=warn)</span>
+        </button>
+
+        <button type="button" class="vector-btn" id="vec-dna-disabled">
+          <span class="vector-tag tag-safe">DNA Disabled</span>
+          <strong>Disabled Rule — Should NOT trigger</strong>
+          <span>DISABLED-RULE-XYZ99 (enabled=false)</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Submission & Event Console -->
+    <section class="simulator-card">
+      <div class="section-heading">
+        <span>Submission Event Console</span>
+        <button type="button" class="chat-btn" id="clear-console-btn" style="font-size: 11px;">Clear Console</button>
+      </div>
+      <div class="console-box" id="event-console">
+        <div class="log-entry" style="color: #6b7280;">Ready. Click any test card above or type in composer, then test Enter or Send...</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- PromptShield Core Modules -->
+  <script src="../content/detector.js"></script>
+  <script src="../content/company-rules.js"></script>
+  <script src="../content/ui.js"></script>
+  <script src="../content/content.js"></script>
+
+  <!-- External Test Harness Controller (CSP Compliant - No inline scripts) -->
+  <script src="test-harness.js"></script>
+</body>
+</html>

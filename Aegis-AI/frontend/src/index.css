@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&family=Inter:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc; /* slate-50 */
+  color: #0f172a; /* slate-900 */
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Neo-brutalist utilities */
+.neo-border {
+  border: 1px solid #1e293b; /* Reduced from 2px #000 to match user critique */
+}
+.neo-shadow {
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+}
+.neo-shadow-sm {
+  box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
+}
+.neo-shadow-none {
+  box-shadow: none;
+}
+.neo-hover:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
+}
+.neo-active:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px 0px rgba(0,0,0,1);
+}
+
+/* Crisp Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent; 
+  border-left: 2px solid #000;
+}
+::-webkit-scrollbar-thumb {
+  background: #000; 
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #333; 
+}
